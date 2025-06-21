@@ -684,12 +684,11 @@ def predict_csv(request):
         df['Attrition_Probability'] = probabilities
         df['Attrition_Predicted'] = predictions
 
-        results = df[['Attrition_Predicted', 'Attrition_Probability']].to_dict(orient='records')
-        print("🔍 DEBUG: Predict view triggered")
-        print("🔍 DEBUG: Results = ", results)
+        
+        predicted_table_html = df[['Attrition_Predicted', 'Attrition_Probability']].to_html(classes='table table-striped', index=False)
 
         return render(request, 'HOME.html', {
-            'results': results,
+            'predicted_table_html': predicted_table_html,
             'original_file_name': csv_file.name,
             'model_loaded': True
         })
