@@ -13,7 +13,6 @@ urlpatterns = [
     path('about',about_logout,name='login'),
     #path('datainserted',userdata_view,name='datainserted'),
     path('logout',logout,name='logout'),
-    #path('predict/', views.predict_attrition, name='predict_attrition'),
     path('HOME',predict_csv, name='predict_csv'),
 
 

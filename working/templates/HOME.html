@@ -1732,30 +1732,6 @@
         </div>
     </form>
 
-
-    <!-- {% if results %}
-        <h2>Prediction Results:</h2>
-        <table border="1" cellspacing="0" cellpadding="5">
-            <tr>
-            <th>Prediction</th>
-            <th>Probability</th>
-            </tr>
-            {% for row in results %}
-            <tr>
-                <td>{{ row.Attrition_Predicted }}</td>
-                <td>{{ row.Attrition_Probability|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% endif %} -->
-
-
-
-
-
-
-
-
     {% if error_message %}
         <div class="alert alert-danger" role="alert">
             {{ error_message }}

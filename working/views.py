@@ -607,91 +607,52 @@ cat_model = joblib.load(os.path.join(MODEL_DIR, 'cat_model.pkl'))
 scaler = joblib.load(os.path.join(MODEL_DIR, 'scaler.pkl'))
 label_encoders = joblib.load(os.path.join(MODEL_DIR, 'label_encoders.pkl'))
 
-# def predict_csv(request):
-#     if request.method == 'POST' and request.FILES.get('csv_file'):
-#         csv_file = request.FILES['csv_file']
-#         fs = FileSystemStorage()
-#         file_path = fs.save(csv_file.name, csv_file)
-#         full_path = fs.path(file_path)
-
-#         # Read CSV
-#         try:
-#             df = pd.read_csv(full_path)
-#         except Exception as e:
-#             return render(request, 'HOME.html', {'error': 'Invalid CSV file format.'})
-
-#         # Encode categorical columns
-#         for col, le in label_encoders.items():
-#             if col in df.columns:
-#                 try:
-#                     df[col] = le.transform(df[col].astype(str))
-#                 except:
-#                     return render(request, 'HOME.html', {'error': f'Encoding failed for column: {col}'})
-
-#         # Scale numeric features
-#         try:
-#             df_scaled = scaler.transform(df)
-#         except Exception as e:
-#             return render(request, 'HOME.html', {'error': 'Scaling failed. Check your columns.'})
-
-#         # Predict
-#         probabilities = cat_model.predict_proba(df_scaled)[:, 1]
-#         predictions = (probabilities >= 0.3).astype(int)
-
-#         df['Attrition_Probability'] = probabilities
-#         df['Attrition_Predicted'] = predictions
-
-#         results = df[['Attrition_Predicted', 'Attrition_Probability']].to_dict(orient='records')
-
-#         return render(request, 'HOME.html', {'results': results},{'model_loaded': True})
-#         #return render(request, 'HOME.html', {'results': results,'original_file_name': csv_file.name,'model_loaded': True,})
-
-#     #return render(request, 'HOME.html')
-#     #return render(request, 'HOME.html', {'model_loaded': True})
-#     return render(request, 'HOME.html', {'results': results,'original_file_name': csv_file.name,'model_loaded': True,})
-
 def predict_csv(request):
     if request.method == 'POST' and request.FILES.get('csv_file'):
+        action = request.POST.get('action')  # Check which button was clicked
         csv_file = request.FILES['csv_file']
         fs = FileSystemStorage()
         file_path = fs.save(csv_file.name, csv_file)
         full_path = fs.path(file_path)
 
-        # Read CSV
         try:
             df = pd.read_csv(full_path)
-        except Exception:
-            return render(request, 'HOME.html', {'error': 'Invalid CSV file format.', 'model_loaded': True})
+        except Exception as e:
+            return render(request, 'HOME.html', {'error_message': 'Invalid CSV file format.'})
 
-        # Encode categorical columns
-        for col, le in label_encoders.items():
-            if col in df.columns:
-                try:
-                    df[col] = le.transform(df[col].astype(str))
-                except:
-                    return render(request, 'HOME.html', {'error': f'Encoding failed for column: {col}', 'model_loaded': True})
+        if action == 'view_original':
+            html_table = df.to_html(classes="table table-bordered", index=False)
+            return render(request, 'HOME.html', {
+                'original_table_html': html_table,
+                'original_file_name': csv_file.name,
+                'model_loaded': True
+            })
 
-        # Scale numeric features
-        try:
-            df_scaled = scaler.transform(df)
-        except Exception:
-            return render(request, 'HOME.html', {'error': 'Scaling failed. Check your columns.', 'model_loaded': True})
+        elif action == 'predict':
+            for col, le in label_encoders.items():
+                if col in df.columns:
+                    try:
+                        df[col] = le.transform(df[col].astype(str))
+                    except Exception:
+                        return render(request, 'HOME.html', {'error_message': f'Encoding failed for column: {col}'})
 
-        # Predict
-        probabilities = cat_model.predict_proba(df_scaled)[:, 1]
-        predictions = (probabilities >= 0.3).astype(int)
+            try:
+                df_scaled = scaler.transform(df)
+            except Exception:
+                return render(request, 'HOME.html', {'error_message': 'Scaling failed. Check your columns.'})
 
-        df['Attrition_Probability'] = probabilities
-        df['Attrition_Predicted'] = predictions
+            probabilities = cat_model.predict_proba(df_scaled)[:, 1]
+            predictions = (probabilities >= 0.3).astype(int)
 
-        
-        predicted_table_html = df[['Attrition_Predicted', 'Attrition_Probability']].to_html(classes='table table-striped', index=False)
+            df['Attrition_Probability'] = probabilities
+            df['Attrition_Predicted'] = predictions
+            predicted_html = df[['Attrition_Predicted', 'Attrition_Probability']].to_html(classes="table table-bordered", index=False)
 
-        return render(request, 'HOME.html', {
-            'predicted_table_html': predicted_table_html,
-            'original_file_name': csv_file.name,
-            'model_loaded': True
-        })
+            return render(request, 'HOME.html', {
+                'predicted_table_html': predicted_html,
+                'original_file_name': csv_file.name,
+                'model_loaded': True
+            })
 
-    # For GET request
     return render(request, 'HOME.html', {'model_loaded': True})
+
