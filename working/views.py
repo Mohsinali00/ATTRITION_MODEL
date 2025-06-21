@@ -338,7 +338,7 @@ try:
     # Attempt to load your XGBoost model from 'xgb_model.pkl'
     MODEL_PATH = os.path.join(settings.BASE_DIR, 'working','ml_model_files','xgb_model.pkl')
     
-    print(f"Attempting to load model from: {MODEL_PATH}") # Diagnostic print
+   
 
     with open(MODEL_PATH, 'rb') as file:
         model = joblib.load(file)
