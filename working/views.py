@@ -184,111 +184,111 @@ def signup(request):
 #         return False
 
 # --- Your existing userdata_view with license logic integrated ---
-def userdata_view(request):
-    # Initialize authorization status. This will be passed to the template.
-    # It's good to have a default state for GET requests or initial page load.
-    is_license_authorized = False 
-    
-    if request.method == 'POST':
-        # 1. Retrieve data from the form
-        company_name = request.POST.get('companyName')
-        company_phone = request.POST.get('companyNo')
-        email = request.POST.get('email')
-        department = request.POST.get('department')
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirmPassword')
-        profile_photo = request.FILES.get('profilePhoto') # For profile photo file upload
-        license_image_file = request.FILES.get('licenseFile') # For license image file upload
-
-        # Store in session (as per your context processor needs)
-        request.session['profile_name'] = username
-        request.session['companyname'] = company_name
-
-        # 2. Basic Validation (add more robust validation as needed)
-        if password != confirm_password:
-            # messages.error(request, "Passwords do not match!") # type: ignore
-            # Pass authorization status even if there's a validation error
-            return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
+    def userdata_view(request):
+        # Initialize authorization status. This will be passed to the template.
+        # It's good to have a default state for GET requests or initial page load.
+        is_license_authorized = False 
         
-        if User_Detail.objects.filter(gmail=email).exists():
-            # messages.error(request, "Email already registered!") # type: ignore
-            return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
-        
-        if User_Detail.objects.filter(user_name=username).exists():
-            # messages.error(request, "Username already taken!") # type: ignore
-            return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
-        
-        try:
-            # --- License Authorization Logic ---
-            if license_image_file:
-                fs_licenses = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'temp_uploaded_licenses'))
-                
-                # Ensure the directory for temporary uploads exists
-                if not os.path.exists(fs_licenses.location):
-                    os.makedirs(fs_licenses.location)
+        if request.method == 'POST':
+            # 1. Retrieve data from the form
+            company_name = request.POST.get('companyName')
+            company_phone = request.POST.get('companyNo')
+            email = request.POST.get('email')
+            department = request.POST.get('department')
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            confirm_password = request.POST.get('confirmPassword')
+            profile_photo = request.FILES.get('profilePhoto') # For profile photo file upload
+            license_image_file = request.FILES.get('licenseFile') # For license image file upload
 
-                uploaded_filename = fs_licenses.save(license_image_file.name, license_image_file)
-                uploaded_file_path = os.path.join(fs_licenses.location, uploaded_filename)
+            # Store in session (as per your context processor needs)
+            request.session['profile_name'] = username
+            request.session['companyname'] = company_name
 
-                default_license_path = os.path.join(settings.MEDIA_ROOT, 'default_licenses', 'default_license.jpg') 
-                # ^^^^^ Make sure 'default_license.jpg' is the exact name of your reference file
-
-                # if os.path.exists(default_license_path):
-                #     is_license_authorized = compare_licenses_perceptual(uploaded_file_path, default_license_path)
-                #     request.session['license_authorized'] = is_license_authorized
-                #     if is_license_authorized:
-                #         print("User's license image matched the default.")
-                #         # messages.success(request, "License verified!")
-                #     else:
-                #         print("User's license image did NOT match the default.")
-                #         # messages.warning(request, "License could not be verified.")
-                # else:
-                #     is_license_authorized = False
-                #     request.session['license_authorized'] = False
-                #     print(f"Error: Default license image not found at {default_license_path}")
-                #     # messages.error(request, "Server error: Default license for comparison not found.")
-                
-                # Clean up the temporarily uploaded license file after comparison
-                if os.path.exists(uploaded_file_path):
-                    fs_licenses.delete(uploaded_filename)
-                    print(f"Deleted temporary uploaded license: {uploaded_filename}")
-            else:
-                is_license_authorized = False
-                request.session['license_authorized'] = False
-                print("No license file was uploaded by the user.")
-                # messages.info(request, "No license file was provided.")
-
-
-            # --- Continue with User_Detail object creation and saving ---
-            hashed_password = password # In a real app, use Django's make_password: `from django.contrib.auth.hashers import make_password; hashed_password = make_password(password)`
+            # 2. Basic Validation (add more robust validation as needed)
+            if password != confirm_password:
+                # messages.error(request, "Passwords do not match!") # type: ignore
+                # Pass authorization status even if there's a validation error
+                return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
             
-            user = User_Detail(
-                companyname=company_name,
-                companyphone=company_phone,
-                gmail=email,
-                department=department,
-                user_name=username,
-                password=hashed_password, 
-                image=profile_photo, # Save the uploaded profile image
-                # Assuming your User_Detail model has a field to store authorization status
-                # You might add a field like 'is_license_verified = models.BooleanField(default=False)'
-                # is_license_verified = is_license_authorized 
-            )
-            user.save()
+            if User_Detail.objects.filter(gmail=email).exists():
+                # messages.error(request, "Email already registered!") # type: ignore
+                return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
+            
+            if User_Detail.objects.filter(user_name=username).exists():
+                # messages.error(request, "Username already taken!") # type: ignore
+                return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
+            
+            try:
+                # --- License Authorization Logic ---
+                if license_image_file:
+                    fs_licenses = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'temp_uploaded_licenses'))
+                    
+                    # Ensure the directory for temporary uploads exists
+                    if not os.path.exists(fs_licenses.location):
+                        os.makedirs(fs_licenses.location)
 
-            # messages.success(request, "Account created successfully!") # type: ignore 
-            # If you want to show success message and then redirect
-            return render(request,'HOME') # Make sure 'HOME' is a valid URL name in your urls.py
+                    uploaded_filename = fs_licenses.save(license_image_file.name, license_image_file)
+                    uploaded_file_path = os.path.join(fs_licenses.location, uploaded_filename)
 
-        except Exception as e:
-            # messages.error(request, f"An error occurred: {e}") # type: ignore
-            # Pass authorization status even if there's an error
-            return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
-    
-    # If it's a GET request, just render the empty form
-    # Pass initial authorization status (false by default)
-    return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
+                    default_license_path = os.path.join(settings.MEDIA_ROOT, 'default_licenses', 'default_license.jpg') 
+                    # ^^^^^ Make sure 'default_license.jpg' is the exact name of your reference file
+
+                    # if os.path.exists(default_license_path):
+                    #     is_license_authorized = compare_licenses_perceptual(uploaded_file_path, default_license_path)
+                    #     request.session['license_authorized'] = is_license_authorized
+                    #     if is_license_authorized:
+                    #         print("User's license image matched the default.")
+                    #         # messages.success(request, "License verified!")
+                    #     else:
+                    #         print("User's license image did NOT match the default.")
+                    #         # messages.warning(request, "License could not be verified.")
+                    # else:
+                    #     is_license_authorized = False
+                    #     request.session['license_authorized'] = False
+                    #     print(f"Error: Default license image not found at {default_license_path}")
+                    #     # messages.error(request, "Server error: Default license for comparison not found.")
+                    
+                    # Clean up the temporarily uploaded license file after comparison
+                    if os.path.exists(uploaded_file_path):
+                        fs_licenses.delete(uploaded_filename)
+                        print(f"Deleted temporary uploaded license: {uploaded_filename}")
+                else:
+                    is_license_authorized = False
+                    request.session['license_authorized'] = False
+                    print("No license file was uploaded by the user.")
+                    # messages.info(request, "No license file was provided.")
+
+
+                # --- Continue with User_Detail object creation and saving ---
+                hashed_password = password # In a real app, use Django's make_password: `from django.contrib.auth.hashers import make_password; hashed_password = make_password(password)`
+                
+                user = User_Detail(
+                    companyname=company_name,
+                    companyphone=company_phone,
+                    gmail=email,
+                    department=department,
+                    user_name=username,
+                    password=hashed_password, 
+                    image=profile_photo, # Save the uploaded profile image
+                    # Assuming your User_Detail model has a field to store authorization status
+                    # You might add a field like 'is_license_verified = models.BooleanField(default=False)'
+                    # is_license_verified = is_license_authorized 
+                )
+                user.save()
+
+                # messages.success(request, "Account created successfully!") # type: ignore 
+                # If you want to show success message and then redirect
+                return render(request,'HOME.html') # Make sure 'HOME' is a valid URL name in your urls.py
+
+            except Exception as e:
+                # messages.error(request, f"An error occurred: {e}") # type: ignore
+                # Pass authorization status even if there's an error
+                return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
+        
+        # If it's a GET request, just render the empty form
+        # Pass initial authorization status (false by default)
+        return render(request, 'signup.html', {'is_license_authorized': is_license_authorized})
 
 
 def about_logout(request):
@@ -306,7 +306,7 @@ def logout(request):
         print("profile_name deleted from session.")
         print(f"Session after deletion: {request.session.items()}")
         request.session.save()  # Explicitly save the session
-        return render(request,"HOME.html")
+        return render(request,"HOME.html",{'model_loaded': True})
     
 
 # model = None
