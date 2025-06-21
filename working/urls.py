@@ -15,7 +15,6 @@ urlpatterns = [
     path('logout',logout,name='logout'),
     #path('predict/', views.predict_attrition, name='predict_attrition'),
     path('HOME',predict_csv, name='predict_csv'),
-    #path('predict/', predict_csv, name='predict_csv'),
 
 
     

@@ -607,6 +607,49 @@ cat_model = joblib.load(os.path.join(MODEL_DIR, 'cat_model.pkl'))
 scaler = joblib.load(os.path.join(MODEL_DIR, 'scaler.pkl'))
 label_encoders = joblib.load(os.path.join(MODEL_DIR, 'label_encoders.pkl'))
 
+# def predict_csv(request):
+#     if request.method == 'POST' and request.FILES.get('csv_file'):
+#         csv_file = request.FILES['csv_file']
+#         fs = FileSystemStorage()
+#         file_path = fs.save(csv_file.name, csv_file)
+#         full_path = fs.path(file_path)
+
+#         # Read CSV
+#         try:
+#             df = pd.read_csv(full_path)
+#         except Exception as e:
+#             return render(request, 'HOME.html', {'error': 'Invalid CSV file format.'})
+
+#         # Encode categorical columns
+#         for col, le in label_encoders.items():
+#             if col in df.columns:
+#                 try:
+#                     df[col] = le.transform(df[col].astype(str))
+#                 except:
+#                     return render(request, 'HOME.html', {'error': f'Encoding failed for column: {col}'})
+
+#         # Scale numeric features
+#         try:
+#             df_scaled = scaler.transform(df)
+#         except Exception as e:
+#             return render(request, 'HOME.html', {'error': 'Scaling failed. Check your columns.'})
+
+#         # Predict
+#         probabilities = cat_model.predict_proba(df_scaled)[:, 1]
+#         predictions = (probabilities >= 0.3).astype(int)
+
+#         df['Attrition_Probability'] = probabilities
+#         df['Attrition_Predicted'] = predictions
+
+#         results = df[['Attrition_Predicted', 'Attrition_Probability']].to_dict(orient='records')
+
+#         return render(request, 'HOME.html', {'results': results},{'model_loaded': True})
+#         #return render(request, 'HOME.html', {'results': results,'original_file_name': csv_file.name,'model_loaded': True,})
+
+#     #return render(request, 'HOME.html')
+#     #return render(request, 'HOME.html', {'model_loaded': True})
+#     return render(request, 'HOME.html', {'results': results,'original_file_name': csv_file.name,'model_loaded': True,})
+
 def predict_csv(request):
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
@@ -617,8 +660,8 @@ def predict_csv(request):
         # Read CSV
         try:
             df = pd.read_csv(full_path)
-        except Exception as e:
-            return render(request, 'HOME.html', {'error': 'Invalid CSV file format.'})
+        except Exception:
+            return render(request, 'HOME.html', {'error': 'Invalid CSV file format.', 'model_loaded': True})
 
         # Encode categorical columns
         for col, le in label_encoders.items():
@@ -626,13 +669,13 @@ def predict_csv(request):
                 try:
                     df[col] = le.transform(df[col].astype(str))
                 except:
-                    return render(request, 'HOME.html', {'error': f'Encoding failed for column: {col}'})
+                    return render(request, 'HOME.html', {'error': f'Encoding failed for column: {col}', 'model_loaded': True})
 
         # Scale numeric features
         try:
             df_scaled = scaler.transform(df)
-        except Exception as e:
-            return render(request, 'HOME.html', {'error': 'Scaling failed. Check your columns.'})
+        except Exception:
+            return render(request, 'HOME.html', {'error': 'Scaling failed. Check your columns.', 'model_loaded': True})
 
         # Predict
         probabilities = cat_model.predict_proba(df_scaled)[:, 1]
@@ -642,10 +685,14 @@ def predict_csv(request):
         df['Attrition_Predicted'] = predictions
 
         results = df[['Attrition_Predicted', 'Attrition_Probability']].to_dict(orient='records')
+        print("🔍 DEBUG: Predict view triggered")
+        print("🔍 DEBUG: Results = ", results)
 
-        #return render(request, 'HOME.html', {'results': results})
-        return render(request, 'HOME.html', {'results': results,'original_file_name': csv_file.name,'model_loaded': True,})
+        return render(request, 'HOME.html', {
+            'results': results,
+            'original_file_name': csv_file.name,
+            'model_loaded': True
+        })
 
-    #return render(request, 'HOME.html')
+    # For GET request
     return render(request, 'HOME.html', {'model_loaded': True})
-
