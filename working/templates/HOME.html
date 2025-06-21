@@ -1698,7 +1698,9 @@
      
         <div class="upload-section">
     <h3>Upload Your CSV for Attrition Prediction</h3>
-    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+    <!-- <form method="POST" enctype="multipart/form-data" id="uploadForm"> -->
+    <form method="POST" enctype="multipart/form-data" id="uploadForm" action="{% url 'predict_csv' %}">
+    
         {% csrf_token %}
 
         <div class="file-input-wrapper">
